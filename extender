@@ -48,7 +48,7 @@ sudo ifconfig wlan0 192.168.28.1 up
 
 echo "~> IP address for wlan0 Interface is 192.168.28.1"
 
-if [[ -e /etc/hotspot.conf]]; then
+if [[ -e /etc/hotspot.conf ]]; then
 	echo "~> hotspot.conf exists ..."
 else
 	printf "~> creating hotspot.conf file ... "
