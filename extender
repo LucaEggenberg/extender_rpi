@@ -186,8 +186,11 @@ sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 sudo echo 1 > /proc/sys/net/ipv4/ip_forward
 
 sudo systemctl start dnsmasq
-sudo sudo hostapd /etc/hostapd.conf
+sudo sudo hostapd -B /etc/hostapd.conf
 
+sleep 60
+
+sudo pkill hostapd
 sudo systemctl stop dnsmasq
 
 echo "###############    Bye    ###############";
