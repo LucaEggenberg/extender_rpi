@@ -63,10 +63,10 @@ while read p; do
 	if [[ $p == *=* ]]; then
 		IFS='=' read -r -a array <<< $p
 		if [[ $array[0] == "ssid" ]]; then
-			ntname="${$array[1]}";
+			ntname="${$array[1]}"
 		fi
 		if [[ $array[0] == "pw"]]
-			ntpass="${$array[1]}";
+			ntpass="${$array[1]}"
 		fi
 	fi
 done < /etc/hotspot.conf
