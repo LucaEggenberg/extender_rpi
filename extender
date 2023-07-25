@@ -38,71 +38,15 @@ else
 		exit 1
 	fi
 fi
-# check for xterm
-printf "~> checking for xterm ... ";
-if [[ -e /usr/bin/xterm ]]; then
-	printf "ok\n"
-	sleep 0.5
-	printf "\033[A\33[2K\r"
-else
-	echo "not found"
-	printf "Installing ... xterm \n"
-	sudo apt-get install xterm;
-	if [[ $? -ne 0 ]]; then
-		echo "Failed"
-		exit 1
-	fi
-fi
-
-echo "~> Select Emitter Interface (1,2,...)"
-
-
-interface=""
-
-for iface in $(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
-do
-        interface+="$iface"
-        interface+=" "
-done
-
-select c in $interface;
-do
-	break;
-done
-
-if [[ -z $c ]]; then
-	exit 1
-fi
-
-interface=${interface[@]/$c}
-
-# Network interface means the network that is having internet access
-
-# Emitter interface means our actual hotspot
-
-echo "~> Select Network Interface (1,2,...)" ;
-select i in $interface;
-do
-	echo "~> Your Emitter Interface : $c";
-	echo "~> Your Network Interface : $i";
-	break;
-done
-
-in=$i
-
-if [[ -z $in ]]; then
-	exit 1
-fi
-
 
 # this is the default ip assigned to interface 
 
 # you can change it but you also need to update dnsmasq.conf file so i
 # recommend not to change it
-sudo ifconfig $c down
-sudo ifconfig $c 192.168.28.1 up
+sudo ifconfig wlan0 down
+sudo ifconfig wlan0 192.168.28.1 up
 
-echo "~> IP address for $c Interface is 192.168.28.1"
+echo "~> IP address for wlan0 Interface is 192.168.28.1"
 
 read -p "~> Name Your network (default: Extender) : " ntname ;
 if [[ -z $ntname ]]; then
@@ -114,13 +58,15 @@ if [[ -z $ntpass ]]; then
 fi
 echo 
 
+sudo systemctl stop dnsmasq
+
 ##############################################
 if [[ -e /etc/dnsmasq.conf ]]; then
 	echo "~> dnsmasq.conf exists ... "
 	sleep 0.1
 	printf "\033[A\33[2K\r~> updating dnsmasq.conf file ... ";
 	#######################################################
-	echo "interface=$c" > /etc/dnsmasq.conf
+	echo "interface=wlan0" > /etc/dnsmasq.conf
 	echo "no-resolv" >> /etc/dnsmasq.conf
 	echo "expand-hosts" >> /etc/dnsmasq.conf
     echo "dhcp-authoritative" >> /etc/dnsmasq.conf
@@ -143,7 +89,7 @@ else
 	sleep 0.1
 	printf "\033[A\33[2K\r~> updating dnsmasq.conf file ... ";
 	#########################################################
-	echo "interface=$c" > /etc/dnsmasq.conf
+	echo "interface=wlan0" > /etc/dnsmasq.conf
 	echo "no-resolv" >> /etc/dnsmasq.conf
 	echo "expand-hosts" >> /etc/dnsmasq.conf
 	echo "dhcp-authoritative" >> /etc/dnsmasq.conf
@@ -167,7 +113,7 @@ if [[ -e /etc/hostapd.conf ]]; then
 	sleep 0.1
 	printf "\033[A\33[2K\r~> updating hostapd.conf file ... "
 	############################################
-	echo "interface=$c" > /etc/hostapd.conf
+	echo "interface=wlan0" > /etc/hostapd.conf
 	echo "driver=nl80211" >> /etc/hostapd.conf 
 	echo "ssid=$ntname" >> /etc/hostapd.conf 
 	echo "channel=$((RANDOM%11 + 1))" >> /etc/hostapd.conf 
@@ -190,7 +136,7 @@ else
 	sleep 0.1
 	#############################################
 	printf "\033[A\33[2K\r~> updating hostapd.conf file ... "
-	echo "interface=$c" > /etc/hostapd.conf
+	echo "interface=wlan0" > /etc/hostapd.conf
 	echo "driver=nl80211" >> /etc/hostapd.conf 
 	echo "ssid=$ntname" >> /etc/hostapd.conf 
 	echo "channel=$((RANDOM%11 + 1))" >> /etc/hostapd.conf 
@@ -211,10 +157,14 @@ fi
 echo "Extender Service Started ... "
 
 sudo echo 1 > /proc/sys/net/ipv4/ip_forward
-sudo iptables -A FORWARD -i $c -o $in -j ACCEPT
-sudo iptables -A FORWARD -i $in -o $c -m state --state ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -t nat -A POSTROUTING -o $in -j MASQUERADE
-xterm -e bash -c 'sudo dnsmasq -d -C /etc/dnsmasq.conf; exec bash' & xterm -e bash -c 'sudo hostapd /etc/hostapd.conf; exec bash';
+sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+sudo systemctl start dnsmasq
+sudo sudo hostapd /etc/hostapd.conf
+
+# xterm -e bash -c 'sudo dnsmasq -d -C /etc/dnsmasq.conf; exec bash' & xterm -e bash -c 'sudo hostapd /etc/hostapd.conf; exec bash';
 
 echo "###############    Bye    ###############";
 exit 0
