@@ -5,6 +5,7 @@ install: extender
 	else \
 		echo "Installing Extender ... "; \
 		cp extender /usr/bin/ ; \
+		cp startup.py /bin/ ; \
 	fi
 
 uninstall: 
@@ -14,4 +15,5 @@ uninstall:
 	else \
 		echo "Uninstalling Extender ... "; \
 		rm -f /usr/bin/extender; \
+		rm -f /usr/bin/startup.py; \
 	fi
