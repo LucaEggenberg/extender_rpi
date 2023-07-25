@@ -48,15 +48,36 @@ sudo ifconfig wlan0 192.168.28.1 up
 
 echo "~> IP address for wlan0 Interface is 192.168.28.1"
 
-read -p "~> Name Your network (default: Extender) : " ntname ; # todo make static
+if [[ -e /etc/hotspot.conf]]; then
+	echo "~> hotspot.conf exists ..."
+else
+	printf "~> creating hotspot.conf file ... "
+	sudo touch /etc/hotspot.conf
+	sleep 0.1
+	echo "ssid=WlanActivation" > "/etc/hotspot.conf"
+	echo "pw=12345678" > "/etc/hotspot.conf"
+	echo "ok"
+fi
+
+while read p; do
+	if [[ $p == *=* ]]; then
+		IFS='=' read -r -a array <<< $p
+		if [[ $array[0] == "ssid" ]]; then
+			ntname="${$array[1]}";
+		fi
+		if [[ $array[0] == "pw"]]
+			ntpass="${$array[1]}";
+		fi
+	fi
+done < /etc/hotspot.conf
+
 if [[ -z $ntname ]]; then
-	ntname="Extender"
+	exit 1
 fi
-read -s -p "~> Select a Password (default: 12341234) : " ntpass ; # todo make static
+
 if [[ -z $ntpass ]]; then
-	ntpass="12341234" # i know it is a stupid password 
+	exit 1
 fi
-echo 
 
 sudo systemctl stop dnsmasq
 
@@ -163,8 +184,6 @@ sudo echo 1 > /proc/sys/net/ipv4/ip_forward
 
 sudo systemctl start dnsmasq
 sudo sudo hostapd /etc/hostapd.conf
-
-# xterm -e bash -c 'sudo dnsmasq -d -C /etc/dnsmasq.conf; exec bash' & xterm -e bash -c 'sudo hostapd /etc/hostapd.conf; exec bash';
 
 sudo systemctl stop dnsmasq
 
