@@ -65,7 +65,6 @@ ntpass=""
 while read p; do
         if [[ $p == *=* ]]; then
                 IFS='=' read -r -a array <<< $p
-                echo "${array[0]}"
                 if [[ "${array[0]}" == "ssid" ]]; then
                         ntname="${array[1]}"
                 fi
